@@ -1,0 +1,325 @@
+---
+title: "GR5243 Project1"
+author: "Qihang Li, ql2276"
+date: "September 27, 2017"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+
+### Step 0: Environmental settings and preparations
+
+In this project, we are doing some researches about speeches of U.S. presidents and candidates according to their campaign slogans identified by analysis. First, we shall prepare this notebook with the following environmental settings.
+
+```{r, message=FALSE, warning=FALSE}
+# list all needed packeges
+packages.need=c("rvest", "tibble", "qdap", "sentimentr", "gplots", "dplyr", "tm", 
+                "syuzhet", "factoextra", "beeswarm", "scales", "RColorBrewer", 
+                "RANN", "tm", "topicmodels", "tidytext", "wordcloud", "lubridate")
+
+# load packages
+for (i in 1:length(packages.need))
+{
+  if(sum(packages.need[i]==installed.packages()[, 1])<1)
+    install.packages(packages.need[i], dependencies=T)
+  library(packages.need[i], character.only=T)
+}
+rm(i)
+
+source("./lib/plotstacked.R")
+source("./lib/speechFuncs.R")
+
+print(R.version)
+```
+
+
+
+### Step 1: Read the speeches and campaign slogans
+
+##### 1.1. Data harvest: scrap speech URLs from <http://www.presidency.ucsb.edu/>.
+
+Here, we will select all inaugural addresses of past presidents, nomination speeches of major party candidates and farewell addresses from [The American Presidency Project](http://presidency.proxied.lsit.ucsb.edu/index.php). We don't use the farewell speeches since they are not highly related to the campaign slogans.
+
+```{r, message=FALSE, warning=FALSE}
+# Inauguaral speeches
+main.page=read_html("http://www.presidency.ucsb.edu/inaugurals.php")
+inaug=f.speechlinks(main.page)
+inaug=inaug[-nrow(inaug), ] # remove the last line, irrelevant due to error.
+
+# Nomination speeches
+main.page=read_html("http://www.presidency.ucsb.edu/nomination.php")
+nomin=f.speechlinks(main.page)
+```
+
+##### 1.2. Read in the speech metadata from saved file
+
+Here, we prepared CSV data sets for the speeches we will scrap. 
+
+```{r}
+inaug.list=read.csv("./data/inauglist.csv", stringsAsFactors=F)
+inaug.list$Date=as.Date(ISOdate(inaug.list$Year, 
+                                inaug.list$Month, 
+                                inaug.list$Day))
+inaug.list=inaug.list[, -(5:7)]
+
+nomin.list=read.csv("./data/nominlist.csv", stringsAsFactors=F)
+nomin.list$Date=as.Date(ISOdate(nomin.list$Year, 
+                                nomin.list$Month, 
+                                nomin.list$Day))
+nomin.list=nomin.list[, -(5:7)]
+```
+
+We assemble all scrapped speeches into one list. Note here that we don't have the full text yet, only the links to full text transcripts. 
+
+##### 1.3. scrap the texts of speeches from the speech URLs.
+
+```{r}
+speech.list=rbind(inaug.list, nomin.list)
+speech.list$type=c(rep("inaug", nrow(inaug.list)), 
+                   rep("nomin", nrow(nomin.list)))
+speech.url=rbind(inaug, nomin)
+speech.list=cbind(speech.list, speech.url)
+```
+
+Based on the list of speeches, we scrap the main text part of the transcript's html page. For simple html pages of this kind, [Selectorgadget](http://selectorgadget.com/) is very convenient for identifying the html node that `rvest` can use to scrap its content. For reproducibility, we also save our scrapped speeches into our local folder as individual speech files. 
+
+```{r}
+# Loop over each row in speech.list
+speech.list$fulltext=NA
+for(i in seq(nrow(speech.list)))
+{
+  text=read_html(speech.list$urls[i]) %>% # load the page
+    html_nodes(".displaytext") %>% # isloate the text
+    html_text() # get the text
+  speech.list$fulltext[i]=text
+  # Create the file name
+  filename=paste0("./data/fulltext/", speech.list$type[i], 
+                  speech.list$File[i], "-", speech.list$Term[i], ".txt")
+  sink(file=filename) # open file to write 
+  cat(text)  # write the file
+  sink() # close the file
+}
+# Order by time
+speech.list=speech.list[order(speech.list$Date), ]
+rownames(speech.list)=seq(nrow(speech.list))
+```
+
+##### 1.4. Read in the slogans from saved file
+
+Here, we prepared CSV data sets for the speeches we will scrap. The data is from [Wikipedia](https://en.wikipedia.org/wiki/List_of_U.S._presidential_campaign_slogans). Some of the slogans were not included, since their candidates' speeches are not found. Then we merge the data together. Note that presidents or candidates before William Henry Harrison will not be studied since they don't have campaign slogans.
+
+```{r}
+slogan=read.csv("./data/slogan.csv", stringsAsFactors=F, header=T)
+speech.list$slogan1=NA
+speech.list$slogan2=NA
+speech.list$slogan3=NA
+speech.list$slogan4=NA
+speech.list$slogan5=NA
+speech.list$slogan6=NA
+for(i in seq(nrow(speech.list)))
+{
+  for(j in seq(nrow(slogan)))
+  {
+    if(speech.list$President[i]==slogan$President[j]) # Match presidents
+    {
+      if(year(speech.list$Date[i])-slogan$Year[j]<=1
+         &year(speech.list$Date[i])-slogan$Year[j]>=0) # Match terms
+      {
+        speech.list$slogan1[i]=slogan$Slogan1[j]
+        speech.list$slogan2[i]=slogan$Slogan2[j]
+        speech.list$slogan3[i]=slogan$Slogan3[j]
+        speech.list$slogan4[i]=slogan$Slogan4[j]
+        speech.list$slogan5[i]=slogan$Slogan5[j]
+        speech.list$slogan6[i]=slogan$Slogan6[j]
+      }
+    }
+  }
+}
+```
+
+
+
+### Step 2: Text processing
+
+##### 2.1. Speeches
+
+For the speeches, we remove extra white space, convert all letters to the lower case, remove [stop words](https://github.com/arc12/Text-Mining-Weak-Signals/wiki/Standard-set-of-english-stopwords), removed empty words due to formatting errors, and remove punctuation. Then we compute the [Document-Term Matrix (DTM)](https://en.wikipedia.org/wiki/Document-term_matrix). Also, we make an overall wordcloud for intuition.
+
+```{r, warning=F, fig.height=6, fig.width=6}
+speech.all=Corpus(VectorSource(speech.list$fulltext))
+
+speech.all=tm_map(speech.all, stripWhitespace)
+speech.all=tm_map(speech.all, content_transformer(tolower))
+speech.all=tm_map(speech.all, removeWords, stopwords("english"))
+speech.all=tm_map(speech.all, removeWords, character(0))
+speech.all=tm_map(speech.all, removePunctuation)
+
+speech.tdm.all=TermDocumentMatrix(speech.all)
+speech.tdm.tidy=tidy(speech.tdm.all)
+speech.tdm.overall=summarise(group_by(speech.tdm.tidy, term), sum(count))
+
+wordcloud(speech.tdm.overall$term, speech.tdm.overall$`sum(count)`, 
+          scale=c(5, 0.5), max.words=100,  min.freq=1, 
+          random.order=FALSE, rot.per=0.3, use.r.layout=T, 
+          random.color=FALSE, colors=brewer.pal(9, "Greys"))
+```
+
+We can see that words "people", "government", "america" and etc. are the most frequent notional words, and the word "will" takes up the greatest percentage.
+
+Now we compute TF-IDF weighted document-term matrices for individual speeches. As we would like to identify interesting words for each inaugural speech, we use [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) to weigh each term within each speech. It highlights terms that are more specific for a particular speech. We use Trump's inauguration as examples.
+
+```{r}
+speech.dtm=DocumentTermMatrix(speech.all, 
+                              control=list(weighting=function(x)
+                                              weightTfIdf(x, normalize=F), 
+                                              stopwords=T))
+speech.dtm=tidy(speech.dtm)
+```
+
+##### 2.2. Slogans
+
+We do the same with slogans.
+
+```{r}
+speech.list$slogan.all=NA
+for(i in seq(nrow(speech.list)))
+{
+  n=sum(is.na(speech.list[i,12:17]))
+  if(n<6)
+    speech.list$slogan.all[i]=paste(speech.list[i, 12:(17-n)],collapse=" ")
+}
+slogan.all=Corpus(VectorSource(speech.list$slogan.all))
+
+slogan.all=tm_map(slogan.all, stripWhitespace)
+slogan.all=tm_map(slogan.all, content_transformer(tolower))
+slogan.all=tm_map(slogan.all, removeWords, stopwords("english"))
+slogan.all=tm_map(slogan.all, removeWords, character(0))
+slogan.all=tm_map(slogan.all, removePunctuation)
+
+slogan.tdm.all=TermDocumentMatrix(slogan.all)
+
+slogan.tdm.tidy=tidy(slogan.tdm.all)
+slogan.tdm.overall=summarise(group_by(slogan.tdm.tidy, term), sum(count))
+
+wordcloud(slogan.tdm.overall$term, slogan.tdm.overall$`sum(count)`, 
+          scale=c(5, 0.5), max.words=100,  min.freq=1, 
+          random.order=FALSE, rot.per=0.3, use.r.layout=T, 
+          random.color=FALSE, colors=brewer.pal(9, "Greys"))
+
+slogan.dtm=DocumentTermMatrix(slogan.all, 
+                              control=list(weighting=function(x)
+                                weightTfIdf(x, normalize=F), 
+                                stopwords=T))
+slogan.dtm=tidy(slogan.dtm)
+```
+
+We can see that words "change", "peace", "people" and etc. are the most frequent notional words. This time, the word "america" takes up the greatest percentage.
+
+
+
+### Step 3: Overview of speech and slogan for a certian campaign
+
+We have already separate the data for every single speech. Here we will use a function to show the wordcloud for speeches and slogans according to the number of speech. Also, the ratio of slogan word to frequent speech words will be given.
+
+```{r}
+Slogan.VS.Speech=function(Document, set.frequrncy=100, wordcloud=T, summary=T)
+{
+  # Get speech words
+  speech.term=speech.dtm$term[speech.dtm$document==Document]
+  speech.count=speech.dtm$count[speech.dtm$document==Document]
+  # Check whether there is slogan
+  if(!is.na(speech.list$slogan.all[Document]))
+  {
+    # Get slogan words
+    slogan.term=slogan.dtm$term[slogan.dtm$document==Document]
+    slogan.count=slogan.dtm$count[slogan.dtm$document==Document]
+    # Make wordcloud
+    if(wordcloud)
+    {
+      par(mfrow=c(1, 2))
+      wordcloud(speech.term, speech.count, 
+                scale=c(5, 0.5), max.words=100,  min.freq=1, 
+                random.order=FALSE, rot.per=0.3, use.r.layout=T, 
+                random.color=FALSE, colors=brewer.pal(9, "Blues"))
+     wordcloud(slogan.term, slogan.count, 
+                scale=c(5, 0.5), max.words=100,  min.freq=1, 
+                random.order=FALSE, rot.per=0.3, use.r.layout=T, 
+                random.color=FALSE, colors=brewer.pal(9, "Reds"))
+    }
+    # Generate frequent speech words
+    frequent.term=speech.term[order(speech.count, decreasing=T)]
+    frequent.term=frequent.term[1:set.frequrncy]
+    # Compute ratio
+    ratio=100*sum(is.element(el=slogan.term,set=frequent.term))/length(slogan.term)
+    ratio=round(ratio,4)
+    # Output
+    if(summary)
+      print(paste(ratio, "% of the slogan words appears in ",
+                  ifelse(speech.list$type[Document]=="inaug", "President", "Candidate"),
+                  " ", speech.list$President[Document], "\'s ",
+                  ifelse(speech.list$type[Document]=="inaug", "inauguration", "nomination"),
+                  " speech for the term ", speech.list$Term[Document], " .", sep=""))
+    output=data.frame(President=speech.list$President[Document],
+             Term=speech.list$Term[Document], 
+             Year=year(speech.list$Date[Document]), 
+             Type=ifelse(speech.list$type[Document]=="inaug", "inauguration", "nomination"),
+             Ratio=ratio/100)
+    return(output)
+  }
+  else
+  {
+    if(wordcloud)
+    {
+      par(mfrow=c(1, 1))
+      wordcloud(speech.term, speech.count, 
+                scale=c(5, 0.5), max.words=100,  min.freq=1, 
+                random.order=FALSE, rot.per=0.3, use.r.layout=T, 
+                random.color=FALSE, colors=brewer.pal(9, "Blues"))
+    }
+    if(summary)
+      print(paste("There wasn\'t any slogan for ",
+                  ifelse(speech.list$type[Document]=="inaug", "President", "Candidate"),
+                  " ", speech.list$President[Document], "\'s ",
+                  ifelse(speech.list$type[Document]=="inaug", "inauguration", "nomination"),
+                  " speech for the term ", speech.list$Term[Document], " .", sep=""))
+    output=data.frame(President=speech.list$President[Document],
+             Term=speech.list$Term[Document], 
+             Year=year(speech.list$Date[Document]),  
+             Type=ifelse(speech.list$type[Document]=="inaug", "inauguration", "nomination"),
+             Ratio=NA)
+    return(output)
+  }
+  print(slogan.term)
+}
+```
+
+Some examples are taken: President Washington's inauguration of his 1st term; President Lincoln's inauguration of his 2nd term; candidate Franklin D. Roosevelt's nomination speech of his 4th term; President Trump's inauguration of his 2nd term. After that, we shall study all the ratios except for those who did not have a campaign slogan.
+
+```{r, warning=F}
+Slogan.VS.Speech(1)
+Slogan.VS.Speech(21)
+Slogan.VS.Speech(58)
+Slogan.VS.Speech(111)
+
+Slogan.VS.Speech.out=NULL
+for(i in seq(nrow(speech.list)))
+  Slogan.VS.Speech.out=rbind(Slogan.VS.Speech.out,
+                             Slogan.VS.Speech(i, wordcloud=F, summary=F))
+
+par(mfrow=c(1, 1))
+plot(Slogan.VS.Speech.out$Year[14:113],
+     Slogan.VS.Speech.out$Ratio[14:113],
+     xlab="year", ylab="Ration", xlim=c(1840,2020), ylim=c(-0.1,1.0), 
+     col=as.factor(Slogan.VS.Speech.out$Type), 
+     main="Ratios for slogan words over years")
+legend(x="topleft", legend=c("inauguration", "nomination"),
+       col=c(1,2), pch=1)
+```
+
+We can see that many of the ratios are 0, just like Roosevelt's nomination speech. Why? It's easy to realise that often, a slogan should be short, powerful, exciting and esay to remember. Sometimes polititians even use offensive or humorous slogans in order to get popular. This is different stody with official speeches, which should be long, clear and informative. 
+
+
+
+### Step 4:
