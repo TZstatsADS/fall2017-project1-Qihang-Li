@@ -1,0 +1,56 @@
+President,File,Term,Party,Year,Month,Day,Words,Win
+Hillary Clinton,HillaryClinton,1,Democratic,2016,7,28,5389,No
+Barack Obama,BarackObama,2,Democratic,2012,9,6,4474,Yes
+Barack Obama,BarackObama,1,Democratic,2008,8,28,4652,Yes
+John F. Kerry,JohnFKerry,1,Democratic,2004,7,29,5166,No
+"Albert Gore, Jr.","AlbertGore,Jr",1,Democratic,2000,8,17,5755,No
+William J. Clinton,WilliamJClinton,2,Democratic,1996,8,29,6997,Yes
+William J. Clinton,WilliamJClinton,1,Democratic,1992,7,16,4435,Yes
+Michael Dukakis,MichaelDukakis,1,Democratic,1988,7,21,3316,No
+Walter F. Mondale,WalterFMondale,1,Democratic,1984,7,19,2418,No
+Jimmy Carter,JimmyCarter,2,Democratic,1980,8,14,4655,No
+Jimmy Carter,JimmyCarter,1,Democratic,1976,7,15,2932,Yes
+George McGovern,GeorgeMcGovern,1,Democratic,1972,7,14,2600,No
+Hubert H. Humphrey,HubertHHumphrey,1,Democratic,1968,8,29,3839,No
+Lyndon B. Johnson,LyndonBJohnson,1,Democratic,1964,8,27,2297,No
+John F. Kennedy,JohnFKennedy,1,Democratic,1960,7,15,2560,Yes
+Adlai Stevenson,AdlaiStevenson,2,Democratic,1956,8,17,3045,No
+Adlai Stevenson,AdlaiStevenson,1,Democratic,1952,7,26,1723,No
+Harry S. Truman,HarrySTruman,1,Democratic,1948,7,15,2688,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,4,Democratic,1944,7,20,1769,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,3,Democratic,1940,7,19,3525,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,2,Democratic,1936,6,27,1998,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,1,Democratic,1932,7,2,4309,Yes
+Al Smith,AlSmith,1,Democratic,1928,8,22,8302,No
+Woodrow Wilson,WoodrowWilson,1,Democratic,1916,9,2,5522,Yes
+Donald J. Trump,DonaldJTrump,1,Republican,2016,7,21,5092,Yes
+Mitt Romney,MittRomney,1,Republican,2012,8,30,4087,No
+John McCain,JohnMcCain,1,Republican,2008,9,4,4340,No
+George W. Bush,GeorgeWBush,2,Republican,2004,9,2,5011,Yes
+George W. Bush,GeorgeWBush,1,Republican,2000,8,3,4109,Yes
+Robert Dole,RobertDole,1,Republican,1996,8,15,5771,No
+George H. W. Bush,GeorgeHWBush,2,Republican,1992,8,20,4867,No
+George H. W. Bush,GeorgeHWBush,1,Republican,1988,8,18,4469,Yes
+Ronald Reagan,RonaldReagan,2,Republican,1984,8,23,5060,Yes
+Ronald Reagan,RonaldReagan,1,Republican,1980,7,17,4640,Yes
+Gerald R. Ford,GeraldRFord,1,Republican,1976,8,19,2895,No
+Richard M. Nixon,RichardMNixon,2,Republican,1972,8,23,4348,Yes
+Richard M. Nixon,RichardMNixon,1,Republican,1968,8,8,4664,Yes
+Barry Goldwater,BarryGoldwater,1,Republican,1964,7,16,3186,No
+Richard M. Nixon,RichardMNixon,1,Republican,1960,7,28,5356,No
+Dwight D. Eisenhower,DwightDEisenhower,2,Republican,1956,8,23,4342,Yes
+Dwight D. Eisenhower,DwightDEisenhower,1,Republican,1952,7,11,1131,Yes
+Thomas E. Dewey,ThomasEDewey,2,Republican,1948,6,24,1371,No
+Thomas E. Dewey,ThomasEDewey,1,Republican,1944,6,28,2293,No
+Wendell L. Willkie,WendellLWillkie,1,Republican,1940,8,17,5588,No
+Herbert Hoover,HerbertHoover,2,Republican,1932,6,16,227,No
+Herbert Hoover,HerbertHoover,1,Republican,1932,8,11,7241,Yes
+Calvin Coolidge,CalvinCoolidge,2,Republican,1924,8,14,6586,Yes
+Warren G. Harding,WarrenGHarding,1,Republican,1920,6,12,6833,Yes
+Charles E. Hughes,CharlesEHughes,1,Republican,1916,6,10,881,Yes
+William Howard Taft,WilliamHowardTaft,1,Republican,1908,7,28,"12,055",Yes
+William McKinley,WilliamMcKinley,1,Republican,1900,7,12,2016,Yes
+Benjamin Harrison,BenjaminHarrison,2,Republican,1892,9,3,7892,Yes
+Benjamin Harrison,BenjaminHarrison,1,Republican,1888,9,11,2929,Yes
+James A. Garfield,JamesAGarfield,1,Republican,1880,7,12,1965,Yes
+Abraham Lincoln,AbrahamLincoln,1,Republican,1864,6,9,217,Yes

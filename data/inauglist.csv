@@ -1,0 +1,59 @@
+President,File,Term,Party,Year,Month,Day,Words,Win
+George Washington,GeorgeWashington,1,NA,1789,4,30,1431,Yes
+George Washington,GeorgeWashington,2,NA,1793,3,4,135,Yes
+John Adams,JohnAdams,1,Fedralist,1797,3,4,2321,Yes
+Thomas Jefferson,ThomasJefferson,1,Democratic-Republican Party,1801,3,4,1730,Yes
+Thomas Jefferson,ThomasJefferson,2,Democratic-Republican Party,1805,3,4,2166,Yes
+James Madison,JamesMadison,1,Democratic-Republican Party,1809,3,4,1177,Yes
+James Madison,JamesMadison,2,Democratic-Republican Party,1813,3,4,1211,Yes
+James Monroe,JamesMonroe,1,Democratic-Republican Party,1817,3,4,3375,Yes
+James Monroe,JamesMonroe,2,Democratic-Republican Party,1821,3,4,4472,Yes
+John Quincy Adams,JohnQuincyAdams,1,Democratic-Republican Party,1825,3,4,2915,Yes
+Andrew Jackson,AndrewJackson,1,Democratic,1829,3,4,1128,Yes
+Andrew Jackson,AndrewJackson,2,Democratic,1833,3,4,1176,Yes
+Martin van Buren,MartinvanBuren,1,Democratic,1837,3,4,3843,Yes
+William Henry Harrison,WilliamHenryHarrison,1,Whig,1841,3,4,8460,Yes
+James K. Polk,JamesKPolk,1,Democratic,1845,3,4,4809,Yes
+Zachary Taylor,ZacharyTaylor,1,Whig,1849,3,5,1090,Yes
+Franklin Pierce,FranklinPierce,1,Democratic,1853,3,4,3336,Yes
+James Buchanan,JamesBuchanan,1,Democratic,1857,3,4,2831,Yes
+Abraham Lincoln,AbrahamLincoln,1,Republican,1861,3,4,3637,Yes
+Abraham Lincoln,AbrahamLincoln,2,Republican,1865,3,4,700,Yes
+Ulysses S. Grant,UlyssesSGrant,1,Republican,1869,3,4,1127,Yes
+Ulysses S. Grant,UlyssesSGrant,2,Republican,1873,3,4,1339,Yes
+Rutherford B. Hayes,RutherfordBHayes,1,Republican,1877,3,4,2486,Yes
+James A. Garfield,JamesAGarfield,1,Republican,1881,3,4,2979,Yes
+Grover Cleveland,GroverCleveland-I,1,Democratic,1885,3,4,1686,Yes
+Benjamin Harrison,BenjaminHarrison,1,Republican,1889,3,4,4392,Yes
+Grover Cleveland,GroverCleveland-II,2,Democratic,1893,3,4,2015,Yes
+William McKinley,WilliamMcKinley,1,Republican,1897,3,4,3968,Yes
+William McKinley,WilliamMcKinley,2,Republican,1901,3,4,2218,Yes
+Theodore Roosevelt,TheodoreRoosevelt,1,Republican,1905,3,4,984,Yes
+William Howard Taft,WilliamHowardTaft,1,Republican,1909,3,4,5434,Yes
+Woodrow Wilson,WoodrowWilson,1,Democratic,1913,3,4,1704,Yes
+Woodrow Wilson,WoodrowWilson,2,Democratic,1917,3,4,1526,Yes
+Warren G. Harding,WarrenGHarding,1,Republican,1921,3,4,3329,Yes
+Calvin Coolidge,CalvinCoolidge,1,Republican,1925,3,4,4055,Yes
+Herbert Hoover,HerbertHoover,1,Republican,1929,3,4,3672,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,1,Democratic,1933,3,4,1880,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,2,Democratic,1937,1,20,1808,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,3,Democratic,1941,1,20,1359,Yes
+Franklin D. Roosevelt,FranklinDRoosevelt,4,Democratic,1945,1,20,559,Yes
+Harry S. Truman,HarrySTruman,1,Democratic,1949,1,20,2273,Yes
+Dwight D. Eisenhower,DwightDEisenhower,1,Republican,1953,1,20,2459,Yes
+Dwight D. Eisenhower,DwightDEisenhower,2,Republican,1957,1,21,1658,Yes
+John F. Kennedy,JohnFKennedy,1,Democratic,1961,1,20,1366,Yes
+Lyndon B. Johnson,LyndonBJohnson,1,Democratic,1965,1,20,1507,Yes
+Richard M. Nixon,RichardMNixon,1,Republican,1969,1,20,2128,Yes
+Richard M. Nixon,RichardMNixon,2,Republican,1973,1,20,1803,Yes
+Jimmy Carter,JimmyCarter,1,Democratic,1977,1,20,1229,Yes
+Ronald Reagan,RonaldReagan,1,Republican,1981,1,20,2427,Yes
+Ronald Reagan,RonaldReagan,2,Republican,1985,1,21,2561,Yes
+George H. W. Bush,GeorgeHWBush,1,Republican,1989,1,20,2320,Yes
+William J. Clinton,WilliamJClinton,1,Democratic,1993,1,20,1598,Yes
+William J. Clinton,WilliamJClinton,2,Democratic,1997,1,20,2155,Yes
+George W. Bush,GeorgeWBush,1,Republican,2001,1,20,1592,Yes
+George W. Bush,GeorgeWBush,2,Republican,2005,1,20,2071,Yes
+Barack Obama,BarackObama,1,Democratic,2009,1,20,2395,Yes
+Barack Obama,BarackObama,2,Democratic,2013,1,21,2096,Yes
+Donald J. Trump,DonaldJTrump,1,Republican,2017,1,20,1433,Yes
