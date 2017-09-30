@@ -95,7 +95,7 @@ for(i in seq(nrow(speech.list)))
     html_text() # get the text
   speech.list$fulltext[i]=text
   # Create the file name
-  filename=paste0("./data/fulltext/", speech.list$type[i], 
+  filename=paste0("./output/", speech.list$type[i], 
                   speech.list$File[i], "-", speech.list$Term[i], ".txt")
   sink(file=filename) # open file to write 
   cat(text)  # write the file
@@ -103,6 +103,7 @@ for(i in seq(nrow(speech.list)))
 }
 # Order by time
 speech.list=speech.list[order(speech.list$Date), ]
+speech.list=cbind(Document=seq(nrow(speech.list)), speech.list)
 rownames(speech.list)=seq(nrow(speech.list))
 ```
 
@@ -186,9 +187,9 @@ We do the same with slogans.
 speech.list$slogan.all=NA
 for(i in seq(nrow(speech.list)))
 {
-  n=sum(is.na(speech.list[i,12:17]))
+  n=sum(is.na(speech.list[i,13:18]))
   if(n<6)
-    speech.list$slogan.all[i]=paste(speech.list[i, 12:(17-n)],collapse=" ")
+    speech.list$slogan.all[i]=paste(speech.list[i, 13:(18-n)],collapse=" ")
 }
 slogan.all=Corpus(VectorSource(speech.list$slogan.all))
 
@@ -220,6 +221,8 @@ We can see that words "change", "peace", "people" and etc. are the most frequent
 
 
 ### Step 3: Overview of speech and slogan for a certian campaign
+
+##### 3.1 A function for showing relation with speech and slogan
 
 We have already separate the data for every single speech. Here we will use a function to show the wordcloud for speeches and slogans according to the number of speech. Also, the ratio of slogan word to frequent speech words will be given.
 
@@ -260,7 +263,7 @@ Slogan.VS.Speech=function(Document, set.frequrncy=100, wordcloud=T, summary=T)
                   ifelse(speech.list$type[Document]=="inaug", "President", "Candidate"),
                   " ", speech.list$President[Document], "\'s ",
                   ifelse(speech.list$type[Document]=="inaug", "inauguration", "nomination"),
-                  " speech for the term ", speech.list$Term[Document], " .", sep=""))
+                  " speech for the term ", speech.list$Term[Document], ".", sep=""))
     output=data.frame(President=speech.list$President[Document],
              Term=speech.list$Term[Document], 
              Year=year(speech.list$Date[Document]), 
@@ -283,7 +286,7 @@ Slogan.VS.Speech=function(Document, set.frequrncy=100, wordcloud=T, summary=T)
                   ifelse(speech.list$type[Document]=="inaug", "President", "Candidate"),
                   " ", speech.list$President[Document], "\'s ",
                   ifelse(speech.list$type[Document]=="inaug", "inauguration", "nomination"),
-                  " speech for the term ", speech.list$Term[Document], " .", sep=""))
+                  " speech for the term ", speech.list$Term[Document], ".", sep=""))
     output=data.frame(President=speech.list$President[Document],
              Term=speech.list$Term[Document], 
              Year=year(speech.list$Date[Document]),  
@@ -294,6 +297,8 @@ Slogan.VS.Speech=function(Document, set.frequrncy=100, wordcloud=T, summary=T)
   print(slogan.term)
 }
 ```
+
+###### 3.2. Some examples and an overview
 
 Some examples are taken: President Washington's inauguration of his 1st term; President Lincoln's inauguration of his 2nd term; candidate Franklin D. Roosevelt's nomination speech of his 4th term; President Trump's inauguration of his 2nd term. After that, we shall study all the ratios except for those who did not have a campaign slogan.
 
@@ -318,8 +323,123 @@ legend(x="topleft", legend=c("inauguration", "nomination"),
        col=c(1,2), pch=1)
 ```
 
-We can see that many of the ratios are 0, just like Roosevelt's nomination speech. Why? It's easy to realise that often, a slogan should be short, powerful, exciting and esay to remember. Sometimes polititians even use offensive or humorous slogans in order to get popular. This is different stody with official speeches, which should be long, clear and informative. 
+We can see that many of the ratios are 0, just like Roosevelt's nomination speech. Why? It's easy to realise that often, a slogan should be short, powerful, exciting and esay to remember. Sometimes politicians even use offensive or humorous slogans in order to get popular. This is different stody with official speeches, which should be long, clear and informative. 
+
+Note another thing that ratios to nomination speeches are relatively high. This is due to the fact that campaign slogans are used BEFORE a president is elected. We could imagine that candidates would focus more on election within the nomination speech, which is more related with their slogans; on the other hand, a president will address more about his plan and idea in the inauguration speech, which is less related to the campaign slogan.
 
 
 
-### Step 4:
+### Step 4: Data processing: generate list of sentences
+
+We will use sentences as units of analysis for this project, as sentences are natural languge units for organizing thoughts and ideas. For each extracted sentence, we apply sentiment analysis using [NRC sentiment lexion](http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm). "The NRC Emotion Lexicon is a list of English words and their associations with eight basic emotions (anger, fear, anticipation, trust, surprise, sadness, joy, and disgust) and two sentiments (negative and positive). The annotations were manually done by crowdsourcing."
+
+We assign an sequential id to each sentence in a speech (`sent.id`) and also calculated the number of words in each sentence as *sentence length* (`word.count`). Some non-sentences exist in raw data due to erroneous extra end-of sentence marks.
+
+```{r, message=F, warning=F}
+sentence.list=NULL
+for(i in 1:nrow(speech.list)){
+  sentences=sent_detect(speech.list$fulltext[i], 
+                        endmarks=c("?", ".", "!", "|", ";"))
+  if(length(sentences)>0)
+  {
+    emotions=get_nrc_sentiment(sentences)
+    word.count=word_count(sentences)
+    emotions=diag(1/(word.count+0.01))%*%as.matrix(emotions)
+    sentence.list=rbind(sentence.list, 
+                        cbind(speech.list[i, -(9:18)], 
+                              sentences=as.character(sentences), 
+                              word.count, emotions, 
+                              sent.id=1:length(sentences)))
+  }
+}
+sentence.list=sentence.list%>%filter(!is.na(word.count)) 
+```
+
+Again, we do the same for slogans.
+
+```{r, message=F, warning=F}
+slogan.list=NULL
+for(i in seq(nrow(speech.list)))
+{
+  n=sum(is.na(speech.list[i, 13:18]))
+  if(n<6)
+  {
+    sentences=paste(speech.list[i, 13:(18-n)])
+    emotions=get_nrc_sentiment(sentences)
+    word.count=word_count(sentences)
+    emotions=diag(1/(word.count+0.01),nrow=nrow(emotions))%*%as.matrix(emotions)
+    slogan.list=rbind(slogan.list, 
+                      cbind(speech.list[i, -(9:18)], 
+                            sentences=as.character(sentences), 
+                            word.count, emotions, 
+                            sent.id=1:length(sentences)))
+  }
+  else
+  {
+    sentences=""
+    emotions=get_nrc_sentiment(sentences)
+    word.count=NA
+    slogan.list=rbind(slogan.list, 
+                      cbind(speech.list[i, -(9:18)], 
+                            sentences=as.character(sentences), 
+                            word.count, emotions, 
+                            sent.id=1:length(sentences)))
+  }
+}
+slogan.list=slogan.list%>%filter(!is.na(word.count))
+rownames(slogan.list)=seq(nrow(slogan.list))
+```
+
+
+
+### Step 5: Overview of sentence length distribution 
+
+First, we use a function to plot the length of sentences from speeches and slogans.
+
+```{r}
+Sentence.Length=function(Document.No)
+{
+  sentence.list.sel=filter(sentence.list, Document==Document.No)
+  sentence.list.sel$File=factor(sentence.list.sel$File)
+  sentence.list.sel$FileOrdered=reorder(sentence.list.sel$File, 
+                                        sentence.list.sel$word.count, 
+                                        mean, order=T)
+  slogan.list.sel=filter(slogan.list, Document==Document.No)
+  slogan.list.sel$File=factor(slogan.list.sel$File)
+  slogan.list.sel$FileOrdered=reorder(slogan.list.sel$File, 
+                                      slogan.list.sel$word.count, 
+                                      mean, order=T)
+  # Make plot
+  Title=paste("length of speeches/slogans")
+  par(mar=c(4, 11, 2, 2))
+  beeswarm(word.count~FileOrdered, data=sentence.list.sel, 
+         horizontal=T, pch=16,  xlim=c(-1,80),
+         cex=0.5, cex.axis=0.8, cex.lab=0.8, 
+         col=alpha(brewer.pal(9, "Set1")), las=2, 
+         spacing=5/nlevels(sentence.list.sel$FileOrdered), 
+         xlab="Number of words in a sentence/slogans", 
+         ylab="", main=Title)
+  if(length(slogan.list.sel$Document))
+    beeswarm(word.count~FileOrdered, data=slogan.list.sel, 
+             horizontal=T, pch=16, cex=2, cex.axis=0.8, cex.lab=0.8, 
+             col=alpha(brewer.pal(9, "Set2"), 0.5), add=T, 
+             spacing=2/nlevels(sentence.list.sel$FileOrdered))
+}
+```
+
+Once again, we use these examples: President Washington's inauguration of his 1st term; President Lincoln's inauguration of his 2nd term; candidate Franklin D. Roosevelt's nomination speech of his 4th term; President Trump's inauguration of his 2nd term. After that, we shall study all the ratios except for those who did not have a campaign slogan.
+
+Since we have 9 colors, we shall add the below for reference:112 Hillary Clinton's nomination speech ,107 Barack Obama's inauguration speech of his 1st term; 97 William J. Clinton's nomination speech for his 2nd term; 86 Ronald Reagan's inauguration speech of his 1st term; 75 Richard M. Nixon's nomination speech of his 1st term.
+
+```{r, fig.width3, fig.height3}
+Sentence.Length(c(1, 21, 58, 75, 86, 97, 107, 111, 112))
+Sentence.Length(c(21, 58))
+Sentence.Length(c(75, 86, 97))
+Sentence.Length(c(107, 111, 112))
+```
+
+The big dots are length of slogans and small ones speeches. We can see that on average, slogans are shorter that speech sentences. Some interesting facts: Lincoln was famous for his fewer but longer sentences, while Trump loves to speak many short sentences. As time moves on, politicians get more interesed in shorter sentences on average.
+
+
+
+
